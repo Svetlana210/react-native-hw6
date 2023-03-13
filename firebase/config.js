@@ -1,8 +1,15 @@
 // import firebase from "firebase/compat/app";
-import * as firebase from "firebase/compat";
-import "firebase/compat/firestore";
-import "firebase/auth";
-import "firebase/compat/storage";
+// import * as firebase from "firebase/compat";
+// import "firebase/compat/firestore";
+// import "firebase/auth";
+// import "firebase/compat/storage";
+
+import AsyncStorage from "@react-native-async-storage/async-storage";
+// Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+import { getFirestore } from "firebase/firestore";
+import { getStorage } from "firebase/storage";
+import { getAuth } from "firebase/auth";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBQsLPl8m0k6oiLvcR27DFqaXSDNaq8o6k",
@@ -15,4 +22,9 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-export default firebase.initializeApp(firebaseConfig);
+// export default firebase.initializeApp(firebaseConfig);
+
+export const app = initializeApp(firebaseConfig);
+export const auth = getAuth();
+export const firestore = getFirestore(app);
+export const storage = getStorage(app);
