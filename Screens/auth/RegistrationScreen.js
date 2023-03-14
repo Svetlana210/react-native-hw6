@@ -325,14 +325,17 @@ import {
 } from "react-native";
 import { auth } from "../../firebase/config";
 
-const initialState = {
-  login: "",
-  email: "",
-  password: "",
-};
-const photoURL = "../../assets/prof.png";
+// const initialState = {
+//   displayName: "",
+//   email: "",
+//   password: "",
+// };
+const photoURL = "../../prof.png";
 function RegistrationScreen({ navigation }) {
-  const [state, setstate] = useState(initialState);
+  const [displayName, setDisplayName] = useState("");
+  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState("");
+  // const [state, setstate] = useState(initialState);
   const [isShowKeyboard, setIsShowKeyboard] = useState(false);
   const [isFocusedLogin, setIsFocusedLogin] = useState(false);
   const [isFocusedEmail, setIsFocusedEmail] = useState(false);
@@ -354,12 +357,18 @@ function RegistrationScreen({ navigation }) {
     };
   }, []);
 
+  const displayNameHandler = (text) => setDisplayName(text.trim());
+  const passwordHandler = (text) => setPassword(text.trim());
+  const emailHandler = (text) => setEmail(text.trim());
+
   const handleSubmit = () => {
-    if (state.email && state.password) {
+    if (email && password) {
       setIsShowKeyboard(false);
-      dispatch(authSignUpUser(state, photoURL));
+      dispatch(authSignUpUser({ displayName, password, email, photoURL }));
       Keyboard.dismiss();
-      setstate(initialState);
+      setEmail("");
+      setPassword("");
+      setDisplayName("");
     } else {
       Alert.alert("Введите данные");
     }
@@ -411,7 +420,7 @@ function RegistrationScreen({ navigation }) {
                     backgroundColor: isFocusedLogin ? "#FFFFFF" : "#F6F6F6",
                   }}
                   placeholder="Логин"
-                  value={state.login}
+                  value={displayName}
                   autoCorrect={false}
                   autoCapitalize="none"
                   onFocus={() => {
@@ -422,9 +431,7 @@ function RegistrationScreen({ navigation }) {
                     setIsShowKeyboard(false);
                     setIsFocusedLogin(false);
                   }}
-                  onChangeText={(value) =>
-                    setstate((prevState) => ({ ...prevState, login: value }))
-                  }
+                  onChangeText={displayNameHandler}
                 />
                 <TextInput
                   style={{
@@ -434,7 +441,7 @@ function RegistrationScreen({ navigation }) {
                     backgroundColor: isFocusedEmail ? "#FFFFFF" : "#F6F6F6",
                   }}
                   placeholder="Адрес электронной почты"
-                  value={state.email}
+                  value={email}
                   autoCorrect={false}
                   autoCapitalize="none"
                   keyboardType="email-address"
@@ -446,9 +453,7 @@ function RegistrationScreen({ navigation }) {
                     setIsShowKeyboard(false);
                     setIsFocusedEmail(false);
                   }}
-                  onChangeText={(value) =>
-                    setstate((prevState) => ({ ...prevState, email: value }))
-                  }
+                  onChangeText={emailHandler}
                 />
                 <View style={styles.inputContainer}>
                   <TextInput
@@ -463,7 +468,7 @@ function RegistrationScreen({ navigation }) {
                     placeholder="Пароль"
                     autoCorrect={false}
                     autoCapitalize="none"
-                    value={state.password}
+                    value={password}
                     secureTextEntry={passwordVisibility}
                     onFocus={() => {
                       setIsShowKeyboard(true);
@@ -473,12 +478,7 @@ function RegistrationScreen({ navigation }) {
                       setIsShowKeyboard(false);
                       setIsFocusedPassword(false);
                     }}
-                    onChangeText={(value) =>
-                      setstate((prevState) => ({
-                        ...prevState,
-                        password: value,
-                      }))
-                    }
+                    onChangeText={passwordHandler}
                   />
                   <Pressable
                     onPress={handlePasswordVisibility}

@@ -425,29 +425,38 @@ import {
 } from "react-native";
 import { Feather, MaterialIcons, Ionicons } from "@expo/vector-icons";
 import { Camera } from "expo-camera";
+import { useSelector } from "react-redux";
+import { firestore, storage } from "../../firebase/config";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { collection, addDoc } from "firebase/firestore";
 
 import * as Location from "expo-location";
 
-const initialState = {
-  name: "",
-  place: "",
-};
+// const initialState = {
+//   name: "",
+//   place: "",
+// };
 
 const CreatePostsScreen = ({ navigation }) => {
-  const [state, setState] = useState(initialState);
+  // const [state, setState] = useState(initialState);
   const [showKeyboard, setShowKeyboard] = useState(false);
   const [camera, setCamera] = useState(null);
   const [photo, setPhoto] = useState(null);
+  const [postName, setPostName] = useState("");
+  const [postLocation, setPostLocation] = useState("");
+  const [coords, setCoords] = useState("");
 
   const [hasPermissionCamera, setHasPermissionCamera] = useState(null);
   const [hasPermissionLocation, setHasPermissionLocation] = useState(null);
 
+  const { userId, displayName } = useSelector((state) => state.auth);
+
   const nameInputHandler = (text) => {
-    setState((prevState) => ({ ...prevState, name: text }));
+    setPostName(text.trim(""));
   };
 
   const placeInputHandler = (text) => {
-    setState((prevState) => ({ ...prevState, place: text }));
+    setPostLocation(text.trim(""));
   };
 
   const hideKeyboard = () => {
@@ -456,8 +465,6 @@ const CreatePostsScreen = ({ navigation }) => {
   };
   useEffect(() => {
     (async () => {
-      console.log("createPost useEffect");
-
       let cameraPermission = await Camera.requestCameraPermissionsAsync();
       setHasPermissionCamera(cameraPermission.status === "granted");
 
@@ -469,15 +476,64 @@ const CreatePostsScreen = ({ navigation }) => {
 
   const takePhoto = async () => {
     const photo = await camera.takePictureAsync();
-    const location = await Location.getCurrentPositionAsync();
-    console.log(location.coords);
+    const photoLocation = await Location.getCurrentPositionAsync();
+    let coords = {
+      latitude: photoLocation.coords.latitude,
+      longitude: photoLocation.coords.longitude,
+    };
     setPhoto(photo.uri);
+    setCoords(coords);
+  };
+
+  const uploadPhotoToServer = async () => {
+    const postId = Date.now().toString();
+
+    const path = `images/${postId}.jpeg`;
+    const storageRef = ref(storage, path);
+
+    const response = await fetch(photo);
+    const file = await response.blob();
+
+    await uploadBytes(storageRef, file).then(() => {
+      console.log("Uploaded a blob or file!");
+    });
+
+    const processedPhoto = await getDownloadURL(storageRef)
+      .then((downloadURL) => {
+        return downloadURL;
+      })
+      .catch((error) => {
+        console.log(error.message);
+      });
+
+    return processedPhoto;
+  };
+  const uploadPostToServer = async () => {
+    const photo = await uploadPhotoToServer();
+    const newPost = {
+      photo,
+      postName,
+      postLocation,
+      userId,
+      displayName,
+      coords,
+      comments: 0,
+      likes: 0,
+    };
+
+    try {
+      await addDoc(collection(firestore, "posts"), newPost);
+      console.log("Post is loaded. Well Done");
+    } catch (error) {
+      console.error("Error while adding doc: ", error.message);
+    }
   };
 
   const publishPhoto = () => {
-    navigation.navigate("Posts", { photo });
+    uploadPhotoToServer();
+    uploadPostToServer();
+    navigation.navigate("Posts");
   };
-
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -514,7 +570,7 @@ const CreatePostsScreen = ({ navigation }) => {
             </View>
             {/* Блок под превью/камерой */}
 
-            <TouchableOpacity activeOpacity={0.8}>
+            <TouchableOpacity activeOpacity={0.8} onPress={publishPhoto}>
               <Text style={styles.uploadEditButton}>Загрузить фото</Text>
             </TouchableOpacity>
 
@@ -522,7 +578,7 @@ const CreatePostsScreen = ({ navigation }) => {
               placeholder="Название..."
               placeholderTextColor="#BDBDBD"
               style={styles.inputDescription}
-              value={state.name}
+              value={postName}
               onChangeText={nameInputHandler}
               // onFocus={() => setShowKeyboard(true)}
               // onBlur={() => setShowKeyboard(false)}
@@ -539,7 +595,7 @@ const CreatePostsScreen = ({ navigation }) => {
                 placeholder="Местность..."
                 placeholderTextColor="#BDBDBD"
                 style={styles.inputLocality}
-                value={state.place}
+                value={postLocation}
                 onChangeText={placeInputHandler}
                 // onFocus={() => setShowKeyboard(true)}
                 // onBlur={() => setShowKeyboard(false)}

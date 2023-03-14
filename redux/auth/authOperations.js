@@ -11,17 +11,17 @@ import { authSlice } from "../auth/authReducer";
 const { updateUserProfile, authSignOut, authStateChange } = authSlice.actions;
 
 export const authSignUpUser =
-  ({ login, email, password }, photoURL) =>
+  ({ displayName, email, password, photoURL }) =>
   async (dispatch) => {
     try {
       await createUserWithEmailAndPassword(auth, email, password);
-      await updateProfile(auth.currentUser, { login, photoURL });
+      await updateProfile(auth.currentUser, { displayName, photoURL });
       const { uid } = auth.currentUser;
 
       dispatch(
         updateUserProfile({
           userId: uid,
-          login,
+          displayName,
           email,
           photoURL,
         })
@@ -51,8 +51,15 @@ export const authSignInUser =
   async (dispatch) => {
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      const { uid, login, photoURL } = auth.currentUser;
-      dispatch(updateUserProfile({ userId: uid, login, email, photoURL }));
+      const { uid, displayName, photoURL } = auth.currentUser;
+      dispatch(
+        updateUserProfile({
+          userId: uid,
+          displayName,
+          email,
+          photoURL,
+        })
+      );
     } catch (error) {
       // Handle Errors here.
       const errorCode = error.code;
@@ -87,14 +94,22 @@ export const authSignOutUser = () => async (dispatch) => {
 };
 export const authStateChangeUser = () => async (dispatch) => {
   await onAuthStateChanged(auth, (user) => {
-    if (user) {
-      const userUpdateProfile = {
-        login: user.displayName,
-        userId: user.uid,
-        email: user.email,
-      };
-      dispatch(updateUserProfile(userUpdateProfile));
-      dispatch(authStateChange({ stateChange: true }));
+    console.log(user);
+    try {
+      if (user) {
+        const { uid, displayName, email } = user;
+        const userUpdateProfile = {
+          userId: uid,
+          displayName,
+          email,
+        };
+        dispatch(authStateChange({ stateChange: true }));
+        dispatch(updateUserProfile(userUpdateProfile));
+      }
+    } catch (error) {
+      console.log("error", error.message);
+      signOut(auth);
+      dispatch(authSignOut());
     }
   });
 };

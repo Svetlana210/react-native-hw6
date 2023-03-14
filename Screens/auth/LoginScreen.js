@@ -294,6 +294,7 @@ import { useDispatch } from "react-redux";
 import { authSignInUser } from "../../redux/auth/authOperations";
 
 const initialState = {
+  displayName: "",
   email: "",
   password: "",
 };

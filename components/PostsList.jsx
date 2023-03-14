@@ -236,7 +236,7 @@ const PostsList = ({ posts, navigation }) => {
           <Image source={{ uri: item.photo }} style={styles.image} />
 
           {/* Описание */}
-          <Text style={styles.description}>Лес</Text>
+          <Text style={styles.description}>{item.postName}</Text>
 
           <View style={styles.buttonsContainer}>
             {/* Кнопка Комментарии */}
@@ -287,7 +287,7 @@ const PostsList = ({ posts, navigation }) => {
                 color={"#BDBDBD"}
                 style={{ marginRight: 4 }}
               />
-              <Text style={styles.locationLink}>Ukraine</Text>
+              <Text style={styles.locationLink}>{item.postLocation}</Text>
             </TouchableOpacity>
           </View>
         </View>

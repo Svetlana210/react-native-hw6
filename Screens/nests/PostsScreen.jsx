@@ -85,31 +85,49 @@
 import React, { useState, useEffect } from "react";
 import { Text, View, StyleSheet, Image } from "react-native";
 import PostsList from "../../components/PostsList";
+import { collection, onSnapshot } from "firebase/firestore";
+import { firestore } from "../../firebase/config";
+import { useSelector } from "react-redux";
 
 const PostsScreen = ({ route, navigation }) => {
   const [posts, setPosts] = useState([]);
+  const { displayName, userEmail, photoURL } = useSelector(
+    (state) => state.auth
+  );
+  console.log(photoURL);
+  const getAllPosts = async () => {
+    const firestoreRef = collection(firestore, "posts");
+    onSnapshot(firestoreRef, (querySnapshot) => {
+      const postsFromDB = [];
+      querySnapshot.forEach((doc) =>
+        postsFromDB.push({ ...doc.data(), id: doc.id })
+      );
+      setPosts(postsFromDB);
+    });
+  };
 
   useEffect(() => {
-    if (route.params) {
-      setPosts((prevState) => [...prevState, route.params]);
-    }
-  }, [route.params]);
+    getAllPosts();
+  }, []);
+
+  // useEffect(() => {
+  //   if (route.params) {
+  //     setPosts((prevState) => [...prevState, route.params]);
+  //   }
+  // }, [route.params]);
 
   return (
     <View style={styles.container}>
       <View style={styles.user}>
         {/* Аватар */}
-        <Image
-          source={require("../../assets/port.png")}
-          style={styles.avatar}
-        />
+        <Image source={{ uri: photoURL }} style={styles.avatar} />
 
         <View style={styles.userInfo}>
           {/* Имя */}
-          <Text style={styles.userInfoName}>Natali Romanova</Text>
+          <Text style={styles.userInfoName}>{displayName}</Text>
 
           {/* Email */}
-          <Text style={styles.userInfoEmail}>email@example.com</Text>
+          <Text style={styles.userInfoEmail}>{userEmail}</Text>
         </View>
       </View>
       <PostsList posts={posts} navigation={navigation} />
