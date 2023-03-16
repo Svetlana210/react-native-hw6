@@ -305,7 +305,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useTogglePasswordVisibility } from "../../hooks/togglePasswordVisibility";
 import { authSignUpUser } from "../../redux/auth/authOperations";
 import { useDispatch } from "react-redux";
-
+import { AvatarContainer } from "../../components/Avatar";
 import {
   ImageBackground,
   StyleSheet,
@@ -330,7 +330,7 @@ import { auth } from "../../firebase/config";
 //   email: "",
 //   password: "",
 // };
-const photoURL = "../../prof.png";
+// const photoURL = "../../prof.png";
 function RegistrationScreen({ navigation }) {
   const [displayName, setDisplayName] = useState("");
   const [password, setPassword] = useState("");
@@ -364,7 +364,7 @@ function RegistrationScreen({ navigation }) {
   const handleSubmit = () => {
     if (email && password) {
       setIsShowKeyboard(false);
-      dispatch(authSignUpUser({ displayName, password, email, photoURL }));
+      dispatch(authSignUpUser({ displayName, password, email }));
       Keyboard.dismiss();
       setEmail("");
       setPassword("");
@@ -397,7 +397,7 @@ function RegistrationScreen({ navigation }) {
               }}
             >
               <View style={styles.imageContainer}>
-                <Image source={require(photoURL)} />
+                <AvatarContainer />
               </View>
 
               <View>
@@ -572,6 +572,7 @@ const styles = StyleSheet.create({
   },
   imageContainer: {
     position: "absolute",
+    zIndex: 1,
     left: 125,
     top: -60,
     width: 120,

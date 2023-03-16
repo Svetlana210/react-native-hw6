@@ -445,6 +445,7 @@ const CreatePostsScreen = ({ navigation }) => {
   const [postName, setPostName] = useState("");
   const [postLocation, setPostLocation] = useState("");
   const [coords, setCoords] = useState("");
+  const [region, setRegion] = useState("");
 
   const [hasPermissionCamera, setHasPermissionCamera] = useState(null);
   const [hasPermissionLocation, setHasPermissionLocation] = useState(null);
@@ -452,11 +453,11 @@ const CreatePostsScreen = ({ navigation }) => {
   const { userId, displayName } = useSelector((state) => state.auth);
 
   const nameInputHandler = (text) => {
-    setPostName(text.trim(""));
+    setPostName(text);
   };
 
   const placeInputHandler = (text) => {
-    setPostLocation(text.trim(""));
+    setPostLocation(text);
   };
 
   const hideKeyboard = () => {
@@ -476,13 +477,16 @@ const CreatePostsScreen = ({ navigation }) => {
 
   const takePhoto = async () => {
     const photo = await camera.takePictureAsync();
-    const photoLocation = await Location.getCurrentPositionAsync();
+    const photoLocation = await Location.getCurrentPositionAsync({});
     let coords = {
       latitude: photoLocation.coords.latitude,
       longitude: photoLocation.coords.longitude,
     };
+    let address = await Location.reverseGeocodeAsync(coords);
+    let city = address[0].city;
     setPhoto(photo.uri);
     setCoords(coords);
+    setRegion(city);
   };
 
   const uploadPhotoToServer = async () => {
@@ -517,8 +521,9 @@ const CreatePostsScreen = ({ navigation }) => {
       userId,
       displayName,
       coords,
-      comments: 0,
-      likes: 0,
+      region,
+      comments: [],
+      likes: [],
     };
 
     try {

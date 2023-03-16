@@ -89,12 +89,14 @@ import { collection, onSnapshot } from "firebase/firestore";
 import { firestore } from "../../firebase/config";
 import { useSelector } from "react-redux";
 
-const PostsScreen = ({ route, navigation }) => {
+const defaultAvatar = "../../assets/prof.png";
+const PostsScreen = ({ navigation }) => {
   const [posts, setPosts] = useState([]);
-  const { displayName, userEmail, photoURL } = useSelector(
+
+  const { displayName, userEmail, userAvatar } = useSelector(
     (state) => state.auth
   );
-  console.log(photoURL);
+
   const getAllPosts = async () => {
     const firestoreRef = collection(firestore, "posts");
     onSnapshot(firestoreRef, (querySnapshot) => {
@@ -120,7 +122,10 @@ const PostsScreen = ({ route, navigation }) => {
     <View style={styles.container}>
       <View style={styles.user}>
         {/* Аватар */}
-        <Image source={{ uri: photoURL }} style={styles.avatar} />
+        <Image
+          style={styles.avatar}
+          source={userAvatar ? { uri: userAvatar } : require(defaultAvatar)}
+        />
 
         <View style={styles.userInfo}>
           {/* Имя */}

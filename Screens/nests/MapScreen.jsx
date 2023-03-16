@@ -27,19 +27,22 @@ import React from "react";
 import { View, Text } from "react-native";
 import MapView, { Marker } from "react-native-maps";
 
-const MapScreen = () => {
+const MapScreen = ({ route }) => {
+  const { location, locality } = route.params;
+  // console.log(locality);
+  const { longitude, latitude } = location;
   return (
     <View style={{ flex: 1 }}>
       <MapView
         style={{ flex: 1 }}
         initialRegion={{
-          longitude: -122.406417,
-          latitude: 37.785834,
+          longitude,
+          latitude,
           latitudeDelta: 0.001,
           longitudeDelta: 0.006,
         }}
       >
-        <Marker coordinate={{ longitude: -122.406417, latitude: 37.785834 }} />
+        <Marker title={locality} coordinate={{ longitude, latitude }} />
       </MapView>
     </View>
   );

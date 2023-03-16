@@ -225,26 +225,50 @@ import {
 } from "react-native";
 import { MaterialIcons, Ionicons, Feather } from "@expo/vector-icons";
 import PostsList from "../../components/PostsList";
-import { useDispatch } from "react-redux";
+
+import { useSelector, useDispatch } from "react-redux";
+
+import { collection, onSnapshot } from "firebase/firestore";
+import { firestore } from "../../firebase/config";
 import { authSignOutUser } from "../../redux/auth/authOperations";
 
 const BG = "../../assets/photo.png";
 
-const ProfileScreen = () => {
+const ProfileScreen = ({ navigation }) => {
+  const [posts2, setPosts2] = useState([]);
   const dispatch = useDispatch();
   const signOut = () => {
     dispatch(authSignOutUser());
   };
+  const { displayName, userId, userAvatar } = useSelector(
+    (state) => state.auth
+  );
+
+  const getAllPosts = async () => {
+    const firestoreRef = collection(firestore, "posts");
+    onSnapshot(firestoreRef, (querySnapshot) => {
+      const postsFromDB = [];
+      querySnapshot.forEach((doc) =>
+        postsFromDB.push({ ...doc.data(), id: doc.id })
+      );
+
+      const userPostsFromDB = postsFromDB.filter(
+        (post) => post.userId == userId
+      );
+      setPosts2(userPostsFromDB);
+    });
+  };
+
+  useEffect(() => {
+    getAllPosts();
+  }, []);
   return (
     <View style={styles.container}>
       <ImageBackground source={require(BG)} style={styles.bgImage}>
         <View style={styles.profile}>
           <View style={styles.avatar}>
             <View style={styles.avatarContainer}>
-              <Image
-                style={styles.avatarImg}
-                source={require("../../assets/profile.png")}
-              />
+              <Image style={styles.avatarImg} source={{ uri: userAvatar }} />
 
               {/* Кнопка Добавить/Удалить аватар */}
               <TouchableOpacity style={styles.avatarButton} activeOpacity={0.8}>
@@ -269,8 +293,8 @@ const ProfileScreen = () => {
           </TouchableOpacity>
 
           {/* Профиль имя */}
-          <Text style={styles.profileTitle}>Natali Romanova</Text>
-          <PostsList />
+          <Text style={styles.profileTitle}>{displayName}</Text>
+          <PostsList posts={posts2} navigation={navigation} />
         </View>
       </ImageBackground>
     </View>

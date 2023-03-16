@@ -8,22 +8,28 @@ import {
 import { auth } from "../../firebase/config";
 import { authSlice } from "../auth/authReducer";
 
-const { updateUserProfile, authSignOut, authStateChange } = authSlice.actions;
+const { updateUserProfile, authSignOut, authStateChange, updateUserAvatar } =
+  authSlice.actions;
 
 export const authSignUpUser =
-  ({ displayName, email, password, photoURL }) =>
-  async (dispatch) => {
+  ({ displayName, email, password }) =>
+  async (dispatch, getState) => {
     try {
+      const userAvatar = getState().auth.userAvatar;
       await createUserWithEmailAndPassword(auth, email, password);
-      await updateProfile(auth.currentUser, { displayName, photoURL });
-      const { uid } = auth.currentUser;
+      const user = auth.currentUser;
+      await updateProfile(user, {
+        displayName,
+        photoURL: userAvatar,
+      });
+      const userUpdate = auth.currentUser;
 
       dispatch(
         updateUserProfile({
-          userId: uid,
+          userId: userUpdate.uid,
           displayName,
           email,
-          photoURL,
+          avatar: userUpdate.photoURL,
         })
       );
     } catch (error) {
@@ -48,7 +54,7 @@ export const authSignUpUser =
 
 export const authSignInUser =
   ({ email, password }) =>
-  async (dispatch) => {
+  async (dispatch, getState) => {
     try {
       await signInWithEmailAndPassword(auth, email, password);
       const { uid, displayName, photoURL } = auth.currentUser;
@@ -57,7 +63,7 @@ export const authSignInUser =
           userId: uid,
           displayName,
           email,
-          photoURL,
+          avatar: photoURL,
         })
       );
     } catch (error) {
@@ -92,16 +98,17 @@ export const authSignOutUser = () => async (dispatch) => {
     console.log("error", error.message);
   }
 };
-export const authStateChangeUser = () => async (dispatch) => {
-  await onAuthStateChanged(auth, (user) => {
-    console.log(user);
+
+export const authStateChangeUser = () => (dispatch, getState) => {
+  onAuthStateChanged(auth, (user) => {
     try {
       if (user) {
-        const { uid, displayName, email } = user;
+        const { uid, displayName, email, photoURL } = user;
         const userUpdateProfile = {
           userId: uid,
           displayName,
           email,
+          avatar: photoURL,
         };
         dispatch(authStateChange({ stateChange: true }));
         dispatch(updateUserProfile(userUpdateProfile));
@@ -113,3 +120,15 @@ export const authStateChangeUser = () => async (dispatch) => {
     }
   });
 };
+export const changeAvatarUser =
+  (processedAvatarURL) => async (dispatch, getState) => {
+    const user = auth.currentUser;
+    // Проверка: это 'Регистрация' или 'Профиль'. Если 'Регистрация', то user еще не существует...
+    if (user !== null) {
+      await updateProfile(user, {
+        photoURL: processedAvatarURL,
+      });
+    }
+    // Запись в стейт Редакса Аватарки, чтобы при Регистрации 'authSignUpUser' взяла оттуда данные
+    dispatch(updateUserAvatar({ avatar: processedAvatarURL }));
+  };

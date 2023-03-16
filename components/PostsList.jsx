@@ -224,8 +224,28 @@ import {
   Image,
   FlatList,
 } from "react-native";
+import { useState } from "react";
 import { Feather } from "@expo/vector-icons";
+import { doc, updateDoc } from "firebase/firestore";
+import { useSelector } from "react-redux";
+
+import { firestore } from "../firebase/config";
 const PostsList = ({ posts, navigation }) => {
+  const { userId } = useSelector((state) => state.auth);
+  const [likes2, setLikes] = useState([]);
+
+  // const setLike = async (postId, likes2) => {
+  //   const userExist = likes2.find((user) => user === userId);
+
+  //   if (!userExist) {
+  //     const postsRef = doc(firestore, "posts", postId);
+  //     await updateDoc(postsRef, {
+  //       likes: [...likes2, userId],
+  //     });
+  //   }
+  //   setLikes(likes2);
+  // };
+
   return (
     <FlatList
       data={posts}
@@ -244,7 +264,11 @@ const PostsList = ({ posts, navigation }) => {
               <TouchableOpacity
                 style={styles.commentsAndLikesBtn}
                 onPress={() => {
-                  navigation.navigate("Comments");
+                  navigation.navigate("Comments", {
+                    postId: item.id,
+                    postImage: item.photo,
+                    postComments: item.comments,
+                  });
                 }}
               >
                 <Feather
@@ -252,16 +276,23 @@ const PostsList = ({ posts, navigation }) => {
                   size={22}
                   style={{
                     marginRight: 6,
-                    color: "#bdbdbd",
+                    color: item.comments < 1 ? "#BDBDBD" : "#FF6C00",
                   }}
                 />
-                <Text style={styles.numberComments}>0</Text>
+                <Text
+                  style={{
+                    ...styles.numberComments,
+                    color: item.comments < 1 ? "#BDBDBD" : "#FF6C00",
+                  }}
+                >
+                  {item.comments.length}
+                </Text>
               </TouchableOpacity>
 
               {/* Кнопка Лайки */}
               <TouchableOpacity
                 style={styles.commentsAndLikesBtn}
-                onPress={() => {}}
+                // onPress={() => setLike(item.id, item.likes)}
               >
                 <Feather
                   name="thumbs-up"
@@ -278,7 +309,10 @@ const PostsList = ({ posts, navigation }) => {
             <TouchableOpacity
               style={styles.locationBtn}
               onPress={() => {
-                navigation.navigate("Map");
+                navigation.navigate("Map", {
+                  location: item.coords,
+                  locality: item.postLocation,
+                });
               }}
             >
               <Feather
@@ -391,8 +425,6 @@ const styles = StyleSheet.create({
   numberComments: {
     fontSize: 16,
     lineHeight: 19,
-
-    color: "#BDBDBD",
   },
 
   locationBtn: {
