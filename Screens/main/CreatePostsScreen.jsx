@@ -14,6 +14,7 @@ import {
 } from "react-native";
 import { Feather, MaterialIcons, Ionicons } from "@expo/vector-icons";
 import { Camera } from "expo-camera";
+import Constants from "expo-constants";
 import { useSelector } from "react-redux";
 import { firestore, storage } from "../../firebase/config";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
@@ -54,6 +55,17 @@ const CreatePostsScreen = ({ navigation }) => {
   };
   useEffect(() => {
     (async () => {
+      if (Constants.platform.ios) {
+        const cameraRollStatus =
+          await ImagePicker.requestMediaLibraryPermissionsAsync();
+        const cameraStatus = await ImagePicker.requestCameraPermissionsAsync();
+        if (
+          cameraRollStatus.status !== "granted" ||
+          cameraStatus.status !== "granted"
+        ) {
+          alert("Sorry, we need these permissions to make this work!");
+        }
+      }
       let cameraPermission = await Camera.requestCameraPermissionsAsync();
       setHasPermissionCamera(cameraPermission.status === "granted");
 
@@ -64,35 +76,42 @@ const CreatePostsScreen = ({ navigation }) => {
   }, []);
 
   const takePhoto = async () => {
-    const photo = await camera.takePictureAsync();
-    const photoLocation = await Location.getCurrentPositionAsync({});
-    let coords = {
-      latitude: photoLocation.coords.latitude,
-      longitude: photoLocation.coords.longitude,
-    };
-    let address = await Location.reverseGeocodeAsync(coords);
-    let city = address[0].city;
-    setPhoto(photo.uri);
-    setCoords(coords);
-    setRegion(city);
+    if (camera) {
+      const options = {
+        // quality: 1,
+        // base64: true,
+        exif: true,
+        skipProcessing: true,
+      };
+      const photo = await camera.takePictureAsync(options);
+      const photoLocation = await Location.getCurrentPositionAsync({});
+      let coords = {
+        latitude: photoLocation.coords.latitude,
+        longitude: photoLocation.coords.longitude,
+      };
+      let address = await Location.reverseGeocodeAsync(coords);
+      let city = address[0].city;
+      setPhoto(photo.uri);
+      setCoords(coords);
+      setRegion(city);
+      setStartCamera(false);
+    }
   };
 
   const takePhotoGallery = async () => {
     setStartCamera(false);
-    // No permissions request is necessary for launching the image library
+
     let imageFromGallery = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.All,
-      allowsEditing: true,
       aspect: [4, 3],
       quality: 1,
     });
 
     if (!imageFromGallery.canceled) {
       setPhoto(imageFromGallery.assets[0].uri);
-    } else {
-      setStartCamera(true);
     }
   };
+
   const uploadPhotoToServer = async () => {
     const postId = Date.now().toString();
 
@@ -139,7 +158,7 @@ const CreatePostsScreen = ({ navigation }) => {
   };
 
   const publishPhoto = () => {
-    uploadPhotoToServer();
+    // uploadPhotoToServer();
     uploadPostToServer();
     navigation.navigate("Posts");
     setPostName("");
@@ -261,8 +280,6 @@ const CreatePostsScreen = ({ navigation }) => {
     </KeyboardAvoidingView>
   );
 };
-
-export default CreatePostsScreen;
 
 const styles = StyleSheet.create({
   cont: {
@@ -459,3 +476,4 @@ const styles = StyleSheet.create({
     height: 24,
   },
 });
+export default CreatePostsScreen;
